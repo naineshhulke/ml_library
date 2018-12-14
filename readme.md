@@ -1,1 +1,1 @@
-Type help(hiccup) for info regarding using this pacakage
+Enter help(hiccup) for info regarding using this pacakage after importing it.
