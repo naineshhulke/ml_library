@@ -1,0 +1,1 @@
+Type help(hiccup) for info regarding using this pacakage
