@@ -1,1 +1,1 @@
-Enter help(hiccup) for info regarding using this pacakage after importing it.
+Machine learning Library
