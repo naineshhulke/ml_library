@@ -5,7 +5,7 @@ Created on Tue Dec 18 15:36:38 2018
 @author: Nainesh
 """
 import numpy as np
-import neuralNetwork as nn
+import neuralNetwork_generalised2 as nn
 import pandas as pd
 import scipy.io as sio
 
@@ -40,8 +40,11 @@ y_test = y[int(0.7*m):]
 
 
 stat = nn.optimize(X_train,y_train)
-stat.parameter(25,10)
-[theta1,theta2] = stat.gettheta(4.5,50)
+stat.parameter([25,50],10)
+Theta = stat.gettheta(4.5,500)
+
+print np.shape(Theta[1])
+print np.shape(Theta[2])
 
 y_predict = stat.predict(X_test)
 print y_test
@@ -50,4 +53,4 @@ print '..............................'
 k = (y_predict==y_test)
 k = k.astype(int)
 
-print np.sum(k)*100/np.shape(y_test)[0]
+print np.sum(k)*100/np.shape(y_test)[0] 
