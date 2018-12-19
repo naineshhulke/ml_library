@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 
 class optimize(object):
@@ -10,31 +11,35 @@ class optimize(object):
 
     self.X_f = X_f
     self.y = y
-    X_norm = self.normalise()
-	
-    m = np.shape(y)[0]
-    X = np.hstack([np.ones((m,1)),X_norm])
-    self.X = X
-	
-  def gettheta(self,alpha,iterations=100,lambda_=0):
+    self.X = self.normalise()
+
+  def gettheta(self,alpha,iterations=100,lambda_=0,batsize=0):
   
     self.alpha = alpha
     self.iterations = iterations
     self.lambda_ = lambda_
-	
-    self.theta = self.gradDescent()
+    self.batsize=batsize
+	 
+    if batsize==0:
+      [self.theta,self.c] = self.gradDescent()
+    else:
+      if int(np.shape(self.X)[0]%batsize) is 0:
+        [self.theta,self.c] = self.mgradDescent()
+      else:
+        print 'Batch size is invalid. Running Batch Gradient Descent....'
+        [self.theta,self.c] = self.gradDescent()
     
-    return self.theta
+    return [self.theta,self.c]
 
-  def costfunc(self,theta):
+  def costfunc(self,theta,c):
     
     m= np.shape(self.X)[0]
-    boundary_eqn = np.dot(self.X,theta)
+    boundary_eqn = np.dot(self.X,theta) + c
     predict = self.sigmoid(boundary_eqn)
     lh = np.log(predict)
     lmh = np.log(1- predict)
     J= (-1.0/m)*np.sum(np.dot(self.y.T,lh)+np.dot((1-self.y).T,lmh))
-    regular = (self.lambda_/(2.0*m))*(np.sum(np.multiply(theta,theta))- (theta[0,0]**2))
+    regular = (self.lambda_/(2.0*m))*np.sum(np.multiply(theta,theta))
     J = J + regular
     return J
 
@@ -42,26 +47,50 @@ class optimize(object):
 
     X = self.X
     y = self.y
-    print np.shape(y)
-    n=np.shape(X)[1]-1
+    n=np.shape(X)[1]
     m= np.shape(X)[0]
     
-    theta = np.random.random((n+1,1))
-    print np.shape(theta)
+    theta = np.random.random((n,1))
+    c = random.uniform(0,1)
     J_vec = np.ones(self.iterations)
 
     for i in range(0,self.iterations):
     
       boundary_eqn = np.dot(X,theta)
-      predict = self.sigmoid(boundary_eqn)
-      grad  = (1.0/m)*np.dot(X.T,predict-y)
+      predict = self.sigmoid(boundary_eqn + c)
+      grad  = (1.0/m) * np.dot( X.T,predict - y )
       grad = grad + (self.lambda_/m)*theta
-      grad[0,0] = grad[0,0] - (self.lambda_/m)*theta[0,0]
       theta = theta - self.alpha*grad
-      J_vec[i]=self.costfunc(theta)
+      c = c - (self.alpha/m)*np.sum(predict - y)
+      J_vec[i]=self.costfunc(theta,c)
       
     self.J_vec =J_vec
-    return theta
+    return [theta,c]
+
+  def mgradDescent(self):
+    
+    n = np.shape(self.X)[1]
+    m = np.shape(self.X)[0]
+    
+    theta = np.random.random((n,1))
+    c = random.uniform(0,1)
+    
+    for j in range(0,self.iterations):
+      
+      for i in range(0,m,self.batsize):
+        X = self.X[i:self.batsize,:]
+        y = self.y[i:self.batsize,:]
+        
+        boundary_eqn = np.dot(X,theta)
+        predict = self.sigmoid(boundary_eqn + c)
+        grad  = (1.0/m) * np.dot( X.T,predict - y )
+        grad = grad + (self.lambda_/m)*theta
+        theta = theta - self.alpha*grad
+        c = c - (self.alpha/m)*np.sum(predict - y)
+        
+    return [theta,c]
+    
+    
 
   def normalise(self):
       
@@ -93,9 +122,8 @@ class optimize(object):
 
   def predict(self,x):                             # X is a vector of n features
       
-    x_norm = np.true_divide((x - self.mean),self.stddev)
-    x_new = np.hstack([np.ones((np.shape(x_norm)[0],1)),x_norm])
-    predt = np.dot(x_new,self.theta)
+    x_ = np.true_divide((x - self.mean),self.stddev)
+    predt = np.dot(x_,self.theta) + self.c
     predt = np.greater_equal(predt,0.5)
     predt = predt.astype(int)
     
