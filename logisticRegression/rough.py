@@ -6,7 +6,7 @@ Created on Sun Dec 16 14:46:12 2018
 """
 
 import numpy as np
-import logisticRegressionCopy as logr
+import logisticRegression as logr
 import pandas as pd
 
 file_data = pd.read_csv('LogisticRegressionData1.txt',header=None)
@@ -43,7 +43,7 @@ y_test = np.reshape(y_test,(np.shape(y_test)[0],1))
 k = stat.accuracy(X_test,y_test)
 print ('Accuracy = ',k)
 
-[theta,c] = stat.gettheta(4,100,1,10)
+[theta,c] = stat.gettheta(4,10,1,20)
 
 k = stat.accuracy(X_test,y_test)
 print ('Accuracy = ',k)

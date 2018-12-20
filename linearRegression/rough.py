@@ -24,15 +24,12 @@ y_test = y[int(0.7*m):]
 
 y_train  = np.reshape(y_train,(32,1))
 y_test = np.reshape(y_test,(np.shape(y_test)[0],1))
-
+print np.shape(y_train)
 stat = logr.optimize(X_train,y_train)
 stat.plotJvsno(1,100)
 
-[theta,c] = stat.gettheta(0.4,100,0,15)
-print theta
+[theta,c] = stat.gettheta(0.4,10,0,17)
 print np.shape(theta)
 
 k = stat.accuracy(X_test,y_test)
 print ('Accuracy = ',k)
-
-print c

@@ -78,8 +78,8 @@ class optimize(object):
     for j in range(0,self.iterations):
       
       for i in range(0,m,self.batsize):
-        X = self.X[i:self.batsize,:]
-        y = self.y[i:self.batsize,:]
+        X = self.X[i:i+self.batsize,:]
+        y = self.y[i:i+self.batsize,:]
         
         boundary_eqn = np.dot(X,theta)
         predict = self.sigmoid(boundary_eqn + c)

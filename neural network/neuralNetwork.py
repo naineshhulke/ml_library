@@ -1,18 +1,31 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Dec 18 15:24:14 2018
+Created on Wed Dec 19 17:56:43 2018
 
 @author: Nainesh
 """
 
+"""
+ A of object of class optimize is used for training . It takes X_train and y_train. -normalise- func mean normalise the data.
+-parameter- func takes two value - (list of number of units in hidden layer in order,number of class)
+-getheta- func takes - (alpha, number of iterations , regularisation parameter , batch size for mini-batch gradient descent{default=0})
+-getheta- calls -gradDescent- which first intialise theta using -random_intialise- and -random_theta-. -gradDescent calls -grad- for gradients 
+as per number of iteration and batch size. -grad- calls -forprop-. -gradDescent- returns Theta to -gettheta-.
+ """
+ 
 import numpy as np
 from math import sqrt as root
 
+def shuffle(a, b):
+  assert len(a)== len(b) 
+  p = np.random.permutation(len(a))
+  return a[p], b[p]
 
 class optimize(object):
   
-  def __init__(self,X_f,y):                           #x_f is matrix of n features, y has elements in range(0,nofcls)
+  def __init__(self,X_f,y):                                  #x_f is matrix of n features, y has elements in range(0,nofcls)
 
+    X_f,y = shuffle(X_f,y)
     self.X = self.normalise(X_f)
     self.y = y
     
@@ -21,109 +34,168 @@ class optimize(object):
     mean= np.mean(x,0)
     self.mean = mean
     return (x - mean)
-    
+
   def sigmoid(self,x):
     dr = 1 + np.exp(-x)
     sig  = np.true_divide(1,dr)
     return sig
 
-  def parameter(self,nhid,nout):
+  def parameter(self,units,nout):                           # units is a list- [no of unit in hidden layers]
+      
+      nlayer = len(units) + 2
+      units.insert(0,int(np.shape(self.X)[1]))
+      units.insert(0,int(0))
+      units.append(nout)
+      self.nlayer = nlayer
+      self.units = units                                   # now, unit is a list - [ int(0) , no_of unit in layer 1, no of unit in layer 2,]
     
-    self.nhid = nhid
-    self.nout = nout
-    
-  def grad(self,theta1,theta2):
-    
-    X = self.X
-    y = self.y
-    m=np.shape(X)[0]
+  def gettheta(self,alpha,iterations=100,lambda_=0,batsize = 0 ):
       
-      #forprop
-    x=X.T
-    [a3,a2,a1,z3,z2] = self.forprop(x,theta1,theta2)
-      
-    Y = np.zeros(np.shape(a3))
-    for k in range(0,m):
-      Y[y[k,0],k] = 1 
-      
-      #backprop
-      
-    del3 = a3 - Y
-    del2 = np.dot(theta2[:,1:].T,del3)*self.sigmoid(z2)*(1-self.sigmoid(z2))
-      
-    grad_1 = np.dot(del2,a1.T)
-    grad_2 = np.dot(del3,a2.T)
-      
-    self.grad_1 = (1.0/m)*grad_1
-    self.grad_2 = (1.0/m)*grad_2
-    
-  def gettheta(self,alpha,iterations=100,lambda_=0):
-      
-    self.alpha=alpha
+    self.alpha = alpha
     self.iterations = iterations
     self.lambda_ = lambda_
+    m = np.shape(self.X)[0]
+    
+    if batsize==0:
+      self.batsize = m
+    else:
+      if int(m)%batsize is 0:
+        self.batsize = batsize
+      else:
+        print 'Batch size is invalid. Running Batch Gradient Descent'
+        self.batsize = m
     
     self.gradDescent()
     
-    return [self.theta1,self.theta2]
+    return self.Theta
+
+  def random_theta(self,i):
+    
+    units = self.units
+    einit = root(6) / ( root( units[i]) + root(units[i+1]) )
+    theta = np.random.random(( units[i+1],units[i]+1) )*2*einit - einit
+    return theta
     
 
+  def random_intialize(self):
     
-  def random_intialise(self):
-     
-    einit1 = root(6)/ (root(np.shape(self.X)[1]) + root(self.nhid))
-    einit2 = root(6)/ (root(self.nhid) + root(self.nout) )
+                                                           #for sake of convention of notation, Theta[0] will contain garbage value
+    Theta = [0]
     
-    theta1 = np.random.random((self.nhid,np.shape(self.X)[1]+1))*einit1 -einit1
-    theta2 = np.random.random((self.nout,self.nhid+1))*einit2 -einit2
+    for i in range(1,self.nlayer):                         # generating theta1 as Theta[1]  and so on , so on . . . .    
+      k = self.random_theta(i)
+      Theta.append(k)
+      
+    return Theta
+
+
+  def forprop(self,x,Theta):
     
-    return [theta1,theta2]
+    A = [0]                                                # for sake of convention of notation, A[0],Z[0] will contain garbage value
+    Z = [0]
+    m = np.shape(x)[1]
+
+    Z.append(x)
+    k = np.vstack([np.ones((1,m)),Z[1]])
+    A.append(k)
     
+    for i in range(2,self.nlayer):
+      
+      k = np.dot(Theta[i-1],A[i-1])
+      Z.append(k)                                          # Z[i] is formed
+      k = np.vstack([np.ones((1,m)),self.sigmoid(Z[i])])
+      A.append(k)                                          # A[i] is formed
+      
+    k = np.dot(Theta[self.nlayer-1],A[self.nlayer-1])
+    Z.append(k)
+    k = self.sigmoid(Z[self.nlayer])
+    A.append(k)
+    
+    return [A,Z]
+    
+  def grad(self,Theta,X,y):
+    
+    nlayer = self.nlayer
+    m=np.shape(self.X)[0]
+    
+    #forprop
+    x=X.T
+    [A,Z] = self.forprop(x,Theta)
+    
+    Y = np.zeros(np.shape(A[nlayer]))
+    for k in range(0,self.batsize):
+      Y[int(y[k,0]),k] = 1
+
+    #backprop
+    Del = []
+    k = A[nlayer] - Y
+    Del.append(k)
+    
+    for i in range(nlayer-1,1,-1):
+      k = np.dot(Theta[i][:,1:].T,Del[nlayer-1-i])
+      k = k*self.sigmoid(Z[i])*(1-self.sigmoid(Z[i]))
+      Del.append(k)
+      
+    Del.append(0)
+    Del.append(0)
+    Del = list(reversed(Del))
+    
+    Grad = [0]
+    for i in range(1,nlayer):
+      temp = Theta[i]
+      temp = np.hstack([np.zeros((self.units[i+1],1)),temp[:,1:]])
+      regular = ((1.0*self.lambda_)/m)*temp
+      k = (1.0/m)*np.dot(Del[i+1],A[i].T) + regular
+      Grad.append(k)
+    
+    self.Grad = Grad
+    
+    
+
   def gradDescent(self):
-      
-    [theta1,theta2] = self.random_intialise()
+    
+    Theta = self.random_intialize()
     alpha = self.alpha
+    nlayer = self.nlayer
+    m = np.shape(self.X)[0]
+    batsize = self.batsize
     
-    for i in range(0,self.iterations):
-      
-      self.grad(theta1,theta2)
-      theta1 = theta1 - alpha*self.grad_1
-      theta2 = theta2 - alpha*self.grad_2
-      
-     
-    self.theta1 = theta1
-    self.theta2 = theta2
-
-  def predict(self,X):
-      
+    for k in range(0,self.iterations):
+        
+      for j in range(0,m,batsize):
+        
+        X = self.X[j:j +batsize,:]
+        y = self.y[j:j+batsize,:]
+        self.grad(Theta,X,y)
+        for i in range(1,nlayer):
+          Theta[i] = Theta[i] - alpha*self.Grad[i]
     
-    X = X - self.mean
-    x = X.T
-    [a3,a2,a1,z3,z2] = self.forprop(x,self.theta1,self.theta2)
-  
-    ind = a3.argmax(0)
-    a3 = np.zeros(np.shape(a3))                                             # some code is written here, use itwhile bvdk
-    for k in range(0,np.shape(a3)[1]):
-      a3[ind[k],k] = 1
+    self.Theta = Theta
     
-    y = a3.argmax(0)
+  def predict(self,x):
+      
+    nlayer = self.nlayer
+    x = x - self.mean
+    x = x.T
+    [A,Z] = self.forprop(x,self.Theta)
+      
+    ind = A[nlayer].argmax(0)
+    A[nlayer] = 0*A[nlayer]
+    for k in range(0,np.shape(A[nlayer])[1]):
+      A[nlayer][ind[k],k] = 1
+      
+    y = A[nlayer].argmax(0)
     y = y.reshape((np.shape(y)[0],1))
-    
-    return y
-
-  def forprop(self,x,theta1,theta2):       # x is a feature 'vector' 
-    
-    a1 = np.vstack([np.ones((1,np.shape(x)[1])),x])
-    z2 = np.dot(theta1,a1)
-    a2 = np.vstack([np.ones((1,np.shape(x)[1])),self.sigmoid(z2)])
-    z3 = np.dot(theta2,a2)
-    a3 = self.sigmoid(z3)
       
-    return [a3,a2,a1,z3,z2]
-    
-    
-  def costfunc(self,X,y,theta1,theta2):
-      pass
-    
-    
-    
+    return y
+  
+  def accuracy (self,X,y):
+      
+    X = X - self.mean
+    y_predict = self.predict(X)
+    k = (y_predict==y)
+    k = k.astype(int)
+
+    return  np.sum(k)*100/np.shape(y)[0]
+      
+        

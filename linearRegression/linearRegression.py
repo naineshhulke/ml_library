@@ -71,8 +71,8 @@ class optimize(object):
     for j in range(0,self.iterations):
         
       for i in range(0,m,self.batsize):
-        a = self.X[i:self.batsize,:]
-        b = self.y[i:self.batsize,:]
+        a = self.X[i:i+self.batsize,:]
+        b = self.y[i:i+self.batsize,:]
             
         predt = np.dot(a,theta) + (c - b) 
         grad = np.dot((a).T,predt)

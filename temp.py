@@ -46,7 +46,7 @@ print
 print 'nichu dekh.....'
 
 
-"""def unison_shuffled_copies(a, b):
+def unison_shuffled_copies(a, b):
   assert np.shape(a)[1] == np.shape(b)[1]
   p = np.random.permutation(len(a))
   return a[p], b[p]
@@ -63,7 +63,10 @@ print a
 class objarr(object):
   def __init__(self,x):
     self.x = x
-    
+
+m = []
+
+m.append(MyClass('a'))    
     
 """"
 
