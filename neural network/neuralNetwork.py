@@ -7,19 +7,25 @@ Created on Wed Dec 19 17:56:43 2018
 
 """
  A of object of class optimize is used for training . It takes X_train and y_train. -normalise- func mean normalise the data.
+ -encode- detects different classes and set their classes as 0,1,2,4,....
 -parameter- func takes two value - (list of number of units in hidden layer in order,number of class)
 -getheta- func takes - (alpha, number of iterations , regularisation parameter , batch size for mini-batch gradient descent{default=0})
 -getheta- calls -gradDescent- which first intialise theta using -random_intialise- and -random_theta-. -gradDescent calls -grad- for gradients 
 as per number of iteration and batch size. -grad- calls -forprop-. -gradDescent- returns Theta to -gettheta-.
+-predict- predicts the output and -decode- help to convert back into classes
  """
  
 import numpy as np
 from math import sqrt as root
+import pandas as pd
 
 def shuffle(a, b):
   assert len(a)== len(b) 
   p = np.random.permutation(len(a))
   return a[p], b[p]
+
+
+
 
 class optimize(object):
   
@@ -27,8 +33,16 @@ class optimize(object):
 
     X_f,y = shuffle(X_f,y)
     self.X = self.normalise(X_f)
-    self.y = y
+    self.y = self.encode(y)
     
+  def encode(self,z):
+    b = list(set(z.flatten()))
+    self.b = b
+    encode = pd.Series(range(0,len(b)),index = b)
+    Y = (encode[z.flatten()]).values
+    y = np.reshape(Y,(-1,1))
+    return y
+        
   def normalise(self,x):
       
     mean= np.mean(x,0)
@@ -187,6 +201,13 @@ class optimize(object):
     y = A[nlayer].argmax(0)
     y = y.reshape((np.shape(y)[0],1))
       
+    return self.decode(y)
+
+  def decode(self,z):
+      
+    decode = pd.Series( self.b ,index = range(0,len(self.b)))
+    y = (decode[z.flatten()]).values
+    y = np.reshape(y,(-1,1))
     return y
   
   def accuracy (self,X,y):

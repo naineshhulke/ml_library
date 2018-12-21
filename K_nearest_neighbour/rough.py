@@ -22,14 +22,24 @@ print np.asarray((unique, counts)).T
 import numpy as np
 import pandas as pd
 import knn as knn
+import matplotlib.pyplot as plt
 
-file = pd.read_csv('data/Corners.txt',header=None,sep=' ')
+def shuffle(a, b):
+  assert len(a)== len(b) 
+  p = np.random.permutation(len(a))
+  return a[p], b[p]
+
+
+
+file = pd.read_csv('data/corners.txt',header=None,sep=' ')
 
 data = np.array(file.values)
 
 X = data[:,0:2]
 y = data[:,2:3]
 
+# X,y = shuffle(X,y)
+X,y = shuffle(X,y)
 m = np.shape(X)[0]
 X_train = X[0:int(0.7*m),:]
 y_train = y[0:int(0.7*m)]
@@ -38,6 +48,25 @@ y_test = y[int(0.7*m):]
 
 stat = knn.det(X_train,y_train,4)
 stat.kval()
-print stat.accuracy(X_test,y_test)
+y_predt = stat.getclass(X_test)
+t = np.reshape(y_train,(np.shape(y_train)[0]))
+print stat.accuracy(X_train,y_train)
+plt.scatter(X_train[:,0],X_train[:,1],c=t)
+plt.show()
+t = np.reshape(y_test,(np.shape(y_test)[0]))
+plt.scatter(X_test[:,0],X_test[:,1],c=t)
+plt.show()
+t = np.reshape(y_predt,(np.shape(y_predt)[0]))
+plt.scatter(X_test[:,0],X_test[:,1],c=t)
+plt.show()
 
+from sklearn.neighbors import KNeighborsClassifier
+t = np.reshape(y_train,(np.shape(y_train)[0],))
+model = KNeighborsClassifier(n_neighbors=5)
+model.fit(X_train,t)
+predicted= model.predict(X_test)
+t = np.reshape(y_test,(np.shape(y_test)[0],))
+k = (predicted==t)
+k = k.astype(int)
 
+print np.sum(k)*100.0/np.shape(t)[0]
