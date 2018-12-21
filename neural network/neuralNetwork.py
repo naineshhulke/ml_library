@@ -7,7 +7,7 @@ Created on Wed Dec 19 17:56:43 2018
 
 """
  A of object of class optimize is used for training . It takes X_train and y_train. -normalise- func mean normalise the data.
- -encode- detects different classes and set their classes as 0,1,2,4,....
+ -encode- detects different classes and set their classes as 0,1,2,3,4,....
 -parameter- func takes two value - (list of number of units in hidden layer in order,number of class)
 -getheta- func takes - (alpha, number of iterations , regularisation parameter , batch size for mini-batch gradient descent{default=0})
 -getheta- calls -gradDescent- which first intialise theta using -random_intialise- and -random_theta-. -gradDescent calls -grad- for gradients 
@@ -56,12 +56,12 @@ class optimize(object):
 
   def parameter(self,units,nout):                           # units is a list- [no of unit in hidden layers]
       
-      nlayer = len(units) + 2
-      units.insert(0,int(np.shape(self.X)[1]))
-      units.insert(0,int(0))
-      units.append(nout)
-      self.nlayer = nlayer
-      self.units = units                                   # now, unit is a list - [ int(0) , no_of unit in layer 1, no of unit in layer 2,]
+    nlayer = len(units) + 2
+    units.insert(0,int(np.shape(self.X)[1]))
+    units.insert(0,int(0))
+    units.append(nout)
+    self.nlayer = nlayer
+    self.units = units                                   # now, unit is a list - [ int(0) , no_of unit in layer 1, no of unit in layer 2,]
     
   def gettheta(self,alpha,iterations=100,lambda_=0,batsize = 0 ):
       
@@ -95,11 +95,7 @@ class optimize(object):
     
                                                            #for sake of convention of notation, Theta[0] will contain garbage value
     Theta = [0]
-    
-    for i in range(1,self.nlayer):                         # generating theta1 as Theta[1]  and so on , so on . . . .    
-      k = self.random_theta(i)
-      Theta.append(k)
-      
+    Theta.extend ( map(lambda i: self.random_theta(i), range(1,self.nlayer)))
     return Theta
 
 
@@ -115,10 +111,8 @@ class optimize(object):
     
     for i in range(2,self.nlayer):
       
-      k = np.dot(Theta[i-1],A[i-1])
-      Z.append(k)                                          # Z[i] is formed
-      k = np.vstack([np.ones((1,m)),self.sigmoid(Z[i])])
-      A.append(k)                                          # A[i] is formed
+      Z.append( np.dot(Theta[i-1],A[i-1]) )                                          # Z[i] is formed
+      A.append( np.vstack([np.ones((1,m)),self.sigmoid(Z[i])]) )                                          # A[i] is formed
       
     k = np.dot(Theta[self.nlayer-1],A[self.nlayer-1])
     Z.append(k)
@@ -142,16 +136,9 @@ class optimize(object):
 
     #backprop
     Del = []
-    k = A[nlayer] - Y
-    Del.append(k)
-    
-    for i in range(nlayer-1,1,-1):
-      k = np.dot(Theta[i][:,1:].T,Del[nlayer-1-i])
-      k = k*self.sigmoid(Z[i])*(1-self.sigmoid(Z[i]))
-      Del.append(k)
-      
-    Del.append(0)
-    Del.append(0)
+    Del.append( A[nlayer] - Y )
+    map ( lambda i: Del.append(self.actgrad(Theta,Del,Z,i)) , range(nlayer-1,1,-1) )  
+    Del.extend([0,0])
     Del = list(reversed(Del))
     
     Grad = [0]
@@ -164,13 +151,15 @@ class optimize(object):
     
     self.Grad = Grad
     
+  def actgrad(self,Theta,Del,Z,i):
     
+    k = np.dot(Theta[i][:,1:].T,Del[self.nlayer-1-i])
+    return k*self.sigmoid(Z[i])*(1-self.sigmoid(Z[i]))
 
   def gradDescent(self):
     
     Theta = self.random_intialize()
     alpha = self.alpha
-    nlayer = self.nlayer
     m = np.shape(self.X)[0]
     batsize = self.batsize
     
@@ -178,11 +167,10 @@ class optimize(object):
         
       for j in range(0,m,batsize):
         
-        X = self.X[j:j +batsize,:]
-        y = self.y[j:j+batsize,:]
+        X = self.X[ j:j + batsize,:]
+        y = self.y[ j:j + batsize,:]
         self.grad(Theta,X,y)
-        for i in range(1,nlayer):
-          Theta[i] = Theta[i] - alpha*self.Grad[i]
+        Theta = map( lambda x,y: x - alpha*y , Theta , self.Grad )
     
     self.Theta = Theta
     
@@ -218,5 +206,5 @@ class optimize(object):
     k = k.astype(int)
 
     return  np.sum(k)*100/np.shape(y)[0]
-      
-        
+
+

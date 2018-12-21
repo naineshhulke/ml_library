@@ -7,7 +7,7 @@ Created on Thu Dec 20 20:21:05 2018
 
 import numpy as np
 import pandas as pd
-
+"""
 x = np.array([[1],[3],[1],[4],['special type']])
 print x.dtype
 print 'upar dekhno'
@@ -31,3 +31,10 @@ print y
 
 
 
+"""
+
+a = [1,2,3]
+b = [1,1,1]
+
+a = map(lambda x,y:x-y,a,b)
+print a
