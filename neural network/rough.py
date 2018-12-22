@@ -42,7 +42,7 @@ y_test = y[int(0.7*m):]
 stat = nn.optimize(X_train,y_train)
 stat.parameter([25,25],10)
 Theta = stat.gettheta(4.5,400,1,2500)
-
+stat.plotJvsno(4.5,30,1)
 print np.shape(Theta[1])
 print np.shape(Theta[2])
 

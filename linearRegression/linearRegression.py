@@ -1,4 +1,6 @@
-#linear regression using classes
+
+# LINEAR REGRESSION 
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,12 +9,21 @@ import random
 
 class optimize(object):
  
-  def __init__(self,X_f,y):                           #x_f is matrix of n features.
 
+  def __init__(self,X_f,y):                                        #x_f is matrix of n features.
+
+    X_f,y = self.shuffle(X_f,y)
     self.X_f = X_f
     self.y = y
     self.X = self.normalise()
 	
+    
+  def shuffle(self,a, b):
+    assert len(a)== len(b) 
+    p = np.random.permutation(len(a))
+    return a[p], b[p]  
+    
+    
   def gettheta(self,alpha,iterations=100,lambda_=0,batsize=0):
   
     self.alpha = alpha
@@ -30,8 +41,9 @@ class optimize(object):
     
     return [self.theta,self.c]
 
+
   def costfunc(self,theta,c):
-    
+        
     m = np.shape(self.X)[0]
     predit = np.dot(self.X,theta) + c
     sq_error = np.power((predit-self.y),2)
@@ -39,6 +51,7 @@ class optimize(object):
     regular = (self.lambda_/(2*m))*np.sum(np.multiply(theta,theta))
     J = J + regular
     return J
+
 
   def gradDescent(self):
 
@@ -59,6 +72,7 @@ class optimize(object):
     
     self.J_vec = J_vec
     return [theta,c]
+
 
   def mgradDescent(self):
       
@@ -90,9 +104,10 @@ class optimize(object):
     self.stddev = stddev
     X_norm = np.true_divide((self.X_f - mean),stddev)
     return X_norm
-	
+
+
   def plotJvsno(self,alpha,iterations,lambda_=0):
-                                                                   # this functin for only batch Grad descent
+                                                                     # this function for only batch Grad descent
     self.alpha = alpha
     self.iterations = iterations
     self.lambda_ = lambda_
@@ -104,16 +119,18 @@ class optimize(object):
     plt.ylabel('Cost')
     plt.title('Cost vs Iterations')
     plt.show()
+
     
-  def predict(self,x):                             # X is a vector of n features
+  def predict(self,x):                                              # X is a vector of n features
       
     x_ = np.true_divide((x - self.mean),self.stddev)
     y = np.dot(x_,self.theta) + self.c
     return y
 
-  def accuracy(self,x,y):                              # x is a vector of n features
-      y_predt = self.predict(x)
-      error  = (100*(y_predt - y))/y
-      error_mean= np.mean(error)
-      
-      return (100 - error_mean)
+
+  def accuracy(self,x,y):                                           # x is a vector of n features
+
+    y_predt = self.predict(x)
+    error  = (100*(y_predt - y))/y
+    error_mean= np.mean(error)
+    return (100 - error_mean)

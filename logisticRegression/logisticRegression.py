@@ -1,17 +1,37 @@
-#linear regression using classes
+# LOGISTIC REGRESSION
 
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import pandas as pd
 
 
 class optimize(object):
  
-  def __init__(self,X_f,y):                           #x_f is matrix of n features.
 
+  def __init__(self,X_f,y):                            #x_f is matrix of n features.
+
+    X_f,y = self.shuffle(X_f,y) 
     self.X_f = X_f
-    self.y = y
+    self.y = self.encode(y)
     self.X = self.normalise()
+ 
+
+  def encode(self,z):
+    b = list(set(z.flatten()))
+    self.b = b
+    encode = pd.Series(range(0,len(b)),index = b)
+    Y = (encode[z.flatten()]).values
+    y = np.reshape(Y,(-1,1))
+    return y
+
+
+  def shuffle(self,a, b):
+
+    assert len(a) == len(b)
+    p = np.random.permutation(len(a))
+    return a[p], b[p] 
+
 
   def gettheta(self,alpha,iterations=100,lambda_=0,batsize=0):
   
@@ -31,6 +51,7 @@ class optimize(object):
     
     return [self.theta,self.c]
 
+
   def costfunc(self,theta,c):
     
     m= np.shape(self.X)[0]
@@ -42,6 +63,7 @@ class optimize(object):
     regular = (self.lambda_/(2.0*m))*np.sum(np.multiply(theta,theta))
     J = J + regular
     return J
+
 
   def gradDescent(self):
 
@@ -67,6 +89,7 @@ class optimize(object):
     self.J_vec =J_vec
     return [theta,c]
 
+
   def mgradDescent(self):
     
     n = np.shape(self.X)[1]
@@ -91,7 +114,6 @@ class optimize(object):
     return [theta,c]
     
     
-
   def normalise(self):
       
     mean= np.mean(self.X_f,0)
@@ -101,6 +123,7 @@ class optimize(object):
     X_norm = np.true_divide((self.X_f - mean),stddev)
     return X_norm
 	
+    
   def plotJvsno(self,alpha,iterations,lambda_=0):
     
     self.alpha = alpha
@@ -114,20 +137,31 @@ class optimize(object):
     plt.ylabel('Cost')
     plt.title('Cost vs Iterations')
     plt.show()
-    
+  
+
   def sigmoid(self,x):
     dr = 1 + np.exp(-x)
     sig  = np.true_divide(1,dr)
     return sig
 
-  def predict(self,x):                             # X is a vector of n features
+
+  def predict(self,x):                                 # X is a vector of n features
       
     x_ = np.true_divide((x - self.mean),self.stddev)
     predt = np.dot(x_,self.theta) + self.c
     predt = np.greater_equal(predt,0.5)
     predt = predt.astype(int)
     
-    return predt
+    return self.decode(predt)
+
+
+  def decode(self,z):
+      
+    decode = pd.Series( self.b ,index = range(0,len(self.b)))
+    y = (decode[z.flatten()]).values
+    y = np.reshape(y,(-1,1))
+    return y
+
 
   def accuracy(self,x,y):                              # x is a vector of n features
       y_predt = self.predict(x)
@@ -136,3 +170,4 @@ class optimize(object):
       accuracy = np.true_divide(n_correct*100,np.shape(y)[0])
       
       return accuracy
+    

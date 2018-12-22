@@ -32,9 +32,39 @@ print y
 
 
 """
+"""
+a = np.array([[0, 1], [2, 2], [4, 3]])
+print (a == a.max(axis=0)[None,:]).astype(int)
 
-a = [1,2,3]
-b = [1,1,1]
+"""
 
-a = map(lambda x,y:x-y,a,b)
-print a
+from numpy import *
+import math
+import matplotlib.pyplot as plt
+"""
+t = linspace(0, 2*math.pi, 400)
+a = sin(t)
+b = cos(t)
+c = a + b
+
+plt.plot(1, 2, 'bo') # plotting t, a separately 
+plt.plot(2, 3, 'bo') # plotting t, b separately 
+plt.plot(t, c, 'g') # plotting t, c separately 
+plt.show()
+"""
+
+import matplotlib.pyplot as plt
+import numpy as np
+ 
+x = np.linspace(0, 10*np.pi, 100)
+y = np.sin(x)
+plt.ion()
+fig = plt.figure()
+ax = fig.add_subplot(111)
+line1, = ax.plot(1, 2, 'b-') 
+line1, = ax.plot(2, 2, 'b-') 
+ 
+for phase in np.linspace(0, 10*np.pi, 100):
+    line1.set_ydata(np.sin(0.5 * x + phase))
+    fig.canvas.draw()
+    

@@ -6,18 +6,19 @@ Created on Wed Dec 19 17:56:43 2018
 """
 
 """
- A of object of class optimize is used for training . It takes X_train and y_train. -normalise- func mean normalise the data.
+ A object of class optimize is used for training . It takes X_train and y_train. -normalise- func mean normalise the data.
  -encode- detects different classes and set their classes as 0,1,2,3,4,....
 -parameter- func takes two value - (list of number of units in hidden layer in order,number of class)
 -getheta- func takes - (alpha, number of iterations , regularisation parameter , batch size for mini-batch gradient descent{default=0})
 -getheta- calls -gradDescent- which first intialise theta using -random_intialise- and -random_theta-. -gradDescent calls -grad- for gradients 
 as per number of iteration and batch size. -grad- calls -forprop-. -gradDescent- returns Theta to -gettheta-.
 -predict- predicts the output and -decode- help to convert back into classes
- """
+"""
  
 import numpy as np
 from math import sqrt as root
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def shuffle(a, b):
   assert len(a)== len(b) 
@@ -63,11 +64,12 @@ class optimize(object):
     self.nlayer = nlayer
     self.units = units                                   # now, unit is a list - [ int(0) , no_of unit in layer 1, no of unit in layer 2,]
     
-  def gettheta(self,alpha,iterations=100,lambda_=0,batsize = 0 ):
+  def gettheta(self,alpha,iterations=100,lambda_=0,batsize = 0, v =0):
       
     self.alpha = alpha
     self.iterations = iterations
     self.lambda_ = lambda_
+    self.v = v
     m = np.shape(self.X)[0]
     
     if batsize==0:
@@ -113,11 +115,9 @@ class optimize(object):
       
       Z.append( np.dot(Theta[i-1],A[i-1]) )                                          # Z[i] is formed
       A.append( np.vstack([np.ones((1,m)),self.sigmoid(Z[i])]) )                                          # A[i] is formed
-      
-    k = np.dot(Theta[self.nlayer-1],A[self.nlayer-1])
-    Z.append(k)
-    k = self.sigmoid(Z[self.nlayer])
-    A.append(k)
+
+    Z.append( np.dot(Theta[self.nlayer-1],A[self.nlayer-1]) )
+    A.append( self.sigmoid(Z[self.nlayer]) )
     
     return [A,Z]
     
@@ -153,8 +153,8 @@ class optimize(object):
     
   def actgrad(self,Theta,Del,Z,i):
     
-    k = np.dot(Theta[i][:,1:].T,Del[self.nlayer-1-i])
-    return k*self.sigmoid(Z[i])*(1-self.sigmoid(Z[i]))
+    k = np.dot( Theta[i][:,1:].T , Del[self.nlayer-1-i] )
+    return k * self.sigmoid(Z[i]) * ( 1-self.sigmoid(Z[i]) )
 
   def gradDescent(self):
     
@@ -162,16 +162,19 @@ class optimize(object):
     alpha = self.alpha
     m = np.shape(self.X)[0]
     batsize = self.batsize
+    pltdata = []
     
     for k in range(0,self.iterations):
         
       for j in range(0,m,batsize):
         
-        X = self.X[ j:j + batsize,:]
-        y = self.y[ j:j + batsize,:]
+        X = self.X[ j : j + batsize ,:]
+        y = self.y[ j : j + batsize ,:]
         self.grad(Theta,X,y)
         Theta = map( lambda x,y: x - alpha*y , Theta , self.Grad )
-    
+        
+      if self.v == 1: pltdata.append(self.costfunc(self.X,self.y,Theta))
+    self.pltdata = pltdata
     self.Theta = Theta
     
   def predict(self,x):
@@ -181,10 +184,6 @@ class optimize(object):
     x = x.T
     [A,Z] = self.forprop(x,self.Theta)
       
-    ind = A[nlayer].argmax(0)
-    A[nlayer] = 0*A[nlayer]
-    for k in range(0,np.shape(A[nlayer])[1]):
-      A[nlayer][ind[k],k] = 1
       
     y = A[nlayer].argmax(0)
     y = y.reshape((np.shape(y)[0],1))
@@ -207,4 +206,34 @@ class optimize(object):
 
     return  np.sum(k)*100/np.shape(y)[0]
 
+  def costfunc(self,X,y,Theta):        # for more efficiency output of forprop can be passed directly.
 
+    nlayer = self.nlayer
+    m = np.shape(X)[0]
+    x = X.T
+    [A,Z] = self.forprop(x,Theta)
+    
+    Y = np.zeros( np.shape( A[nlayer] ) )
+    for k in range(0,np.shape(A[nlayer])[1]):
+      Y[int(y[k,0]),k] = 1
+    
+    J = (-1/m)*(np.sum( Y*np.log(A[nlayer]) - (1-Y)*np.log(1-A[nlayer]) ))
+    regular = 0
+#    for i in range(0,len(Theta)):
+ #     regular = regular + np.sum(Theta[i][:,1:])
+    J = J + (self.lambda_*regular)/(2.0*m)
+    
+    return J
+
+  def plotJvsno(self,alpha,iterations=100,lambda_=0,batsize = 0,v=1):
+      
+    self.gettheta(alpha,iterations,lambda_,batsize,v)
+    plt.plot(range(0,iterations),self.pltdata,'g-')
+    plt.xlabel('Iterations')
+    plt.ylabel('Cost')
+    plt.title('Cost vs Iterations')
+    plt.show()
+    
+    
+    
+    

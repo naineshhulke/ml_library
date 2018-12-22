@@ -31,7 +31,7 @@ def shuffle(a, b):
 
 
 
-file = pd.read_csv('data/corners.txt',header=None,sep=' ')
+file = pd.read_csv('corners.txt',header=None,sep=' ')
 
 data = np.array(file.values)
 
@@ -46,8 +46,7 @@ y_train = y[0:int(0.7*m)]
 X_test = X[int(0.7*m):,:]
 y_test = y[int(0.7*m):]
 
-stat = knn.det(X_train,y_train,4)
-stat.kval()
+stat = knn.det(X_train,y_train)
 y_predt = stat.getclass(X_test)
 t = np.reshape(y_train,(np.shape(y_train)[0]))
 print stat.accuracy(X_train,y_train)
@@ -70,3 +69,5 @@ k = (predicted==t)
 k = k.astype(int)
 
 print np.sum(k)*100.0/np.shape(t)[0]
+print np.shape(X_train)[0]
+stat.plotKvsacc(X_test,y_test,10)
