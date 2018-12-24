@@ -4,13 +4,17 @@ Created on Sun Dec 23 18:58:31 2018
 
 @author: Nainesh
 """
+
+
 import numpy as np
+
 
 class clusterit(object):
     
   def __init__(self,X):
 
     self.X = X
+
     
   def getcluster(self,K,iterations = 100):
       
@@ -26,8 +30,9 @@ class clusterit(object):
     
   def cluster_assign(self,U):
      
-    C = (((self.X[:,np.newaxis,:]-U)**2).sum(2)).argmin(1)     # C is a 1 D numpy array
+    C = (((self.X[:,np.newaxis,:]-U)**2).sum(2)).argmin(1)                                                # C is a 1 D numpy array
     return C
+
     
   def move_centroid(self,C):
       
@@ -35,6 +40,7 @@ class clusterit(object):
     U = np.array(map (lambda k: self.X[np.ravel(np.where(C==k)).astype('int') , : ].mean(0) , centroids))  # D is a 2 D numpy array
     return U
 
-  def predict(self,k):
+
+  def class_set(self,k):
       
     return self.X[np.ravel(np.where(self.C==k)).astype('int') , : ]
