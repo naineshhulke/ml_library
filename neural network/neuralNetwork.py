@@ -6,7 +6,7 @@ Created on Wed Dec 19 17:56:43 2018
 """
 
 """
- A object of class optimize is used for training . It takes X_train and y_train. -normalise- func mean normalise the data.
+ A object of class optimize is used for training . It takes X_train and y_train. -normalise- func mean normalise and -shuffle- shuffles.the data.
  -encode- detects different classes and set their classes as 0,1,2,3,4,....
 -parameter- func takes two value - (list of number of units in hidden layer in order,number of class)
 -getheta- func takes - (alpha, number of iterations , regularisation parameter , batch size for mini-batch gradient descent{default=0})
@@ -20,6 +20,7 @@ from math import sqrt as root
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def shuffle(a, b):
   assert len(a)== len(b) 
   p = np.random.permutation(len(a))
@@ -27,14 +28,15 @@ def shuffle(a, b):
 
 
 
-
 class optimize(object):
-  
+
+    
   def __init__(self,X_f,y):                                  #x_f is matrix of n features, y has elements in range(0,nofcls)
 
     X_f,y = shuffle(X_f,y)
     self.X = self.normalise(X_f)
     self.y = self.encode(y)
+
     
   def encode(self,z):
     b = list(set(z.flatten()))
@@ -43,26 +45,30 @@ class optimize(object):
     Y = (encode[z.flatten()]).values
     y = np.reshape(Y,(-1,1))
     return y
-        
+
+
   def normalise(self,x):
       
     mean= np.mean(x,0)
     self.mean = mean
     return (x - mean)
 
+
   def sigmoid(self,x):
     dr = 1 + np.exp(-x)
     sig  = np.true_divide(1,dr)
     return sig
 
-  def parameter(self,units,nout):                           # units is a list- [no of unit in hidden layers]
+
+  def parameter(self,units,nout):                              # units is a list- [no of unit in hidden layers]
       
     nlayer = len(units) + 2
     units.insert(0,int(np.shape(self.X)[1]))
     units.insert(0,int(0))
     units.append(nout)
     self.nlayer = nlayer
-    self.units = units                                   # now, unit is a list - [ int(0) , no_of unit in layer 1, no of unit in layer 2,]
+    self.units = units                                         # now, unit is a list- [int(0), net_units in layer 1, net_units in layer 2,]
+
     
   def gettheta(self,alpha,iterations=100,lambda_=0,batsize = 0, v =0):
       
@@ -85,6 +91,7 @@ class optimize(object):
     
     return self.Theta
 
+
   def random_theta(self,i):
     
     units = self.units
@@ -95,7 +102,7 @@ class optimize(object):
 
   def random_intialize(self):
     
-                                                           #for sake of convention of notation, Theta[0] will contain garbage value
+                                                                #for sake of convention of notation, Theta[0] will contain garbage value
     Theta = [0]
     Theta.extend ( map(lambda i: self.random_theta(i), range(1,self.nlayer)))
     return Theta
@@ -103,7 +110,7 @@ class optimize(object):
 
   def forprop(self,x,Theta):
     
-    A = [0]                                                # for sake of convention of notation, A[0],Z[0] will contain garbage value
+    A = [0]                                                     # for sake of convention of notation, A[0],Z[0] will contain garbage value
     Z = [0]
     m = np.shape(x)[1]
 
@@ -113,13 +120,14 @@ class optimize(object):
     
     for i in range(2,self.nlayer):
       
-      Z.append( np.dot(Theta[i-1],A[i-1]) )                                          # Z[i] is formed
-      A.append( np.vstack([np.ones((1,m)),self.sigmoid(Z[i])]) )                                          # A[i] is formed
+      Z.append( np.dot(Theta[i-1],A[i-1]) )                        # Z[i] is formed
+      A.append( np.vstack([np.ones((1,m)),self.sigmoid(Z[i])]) )   # A[i] is formed
 
     Z.append( np.dot(Theta[self.nlayer-1],A[self.nlayer-1]) )
     A.append( self.sigmoid(Z[self.nlayer]) )
     
     return [A,Z]
+ 
     
   def grad(self,Theta,X,y):
     
@@ -150,11 +158,13 @@ class optimize(object):
       Grad.append(k)
     
     self.Grad = Grad
-    
+ 
+
   def actgrad(self,Theta,Del,Z,i):
     
     k = np.dot( Theta[i][:,1:].T , Del[self.nlayer-1-i] )
     return k * self.sigmoid(Z[i]) * ( 1-self.sigmoid(Z[i]) )
+
 
   def gradDescent(self):
     
@@ -176,7 +186,8 @@ class optimize(object):
       if self.v == 1: pltdata.append(self.costfunc(self.X,self.y,Theta))
     self.pltdata = pltdata
     self.Theta = Theta
-    
+  
+
   def predict(self,x):
       
     nlayer = self.nlayer
@@ -190,6 +201,7 @@ class optimize(object):
       
     return self.decode(y)
 
+
   def decode(self,z):
       
     decode = pd.Series( self.b ,index = range(0,len(self.b)))
@@ -197,6 +209,7 @@ class optimize(object):
     y = np.reshape(y,(-1,1))
     return y
   
+    
   def accuracy (self,X,y):
       
     X = X - self.mean
@@ -205,6 +218,7 @@ class optimize(object):
     k = k.astype(int)
 
     return  np.sum(k)*100/np.shape(y)[0]
+
 
   def costfunc(self,X,y,Theta):        # for more efficiency output of forprop can be passed directly.
 
@@ -217,13 +231,14 @@ class optimize(object):
     for k in range(0,np.shape(A[nlayer])[1]):
       Y[int(y[k,0]),k] = 1
     
-    J = (-1/m)*(np.sum( Y*np.log(A[nlayer]) - (1-Y)*np.log(1-A[nlayer]) ))
-    regular = 0
-#    for i in range(0,len(Theta)):
- #     regular = regular + np.sum(Theta[i][:,1:])
+    J = (-1/m)*(np.sum( Y*np.log(A[nlayer]) + (1-Y)*np.log(1-A[nlayer]) ))
+    regular = 0.0
+    for i in range(1,len(Theta)):
+      regular = regular + np.sum(Theta[i][:,1:])
     J = J + (self.lambda_*regular)/(2.0*m)
     
     return J
+
 
   def plotJvsno(self,alpha,iterations=100,lambda_=0,batsize = 0,v=1):
       
